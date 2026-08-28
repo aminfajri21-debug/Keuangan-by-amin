@@ -112,12 +112,12 @@
         .nav-add-btn { width: 46px; height: 46px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; color: #ffffff; font-size: 24px; box-shadow: var(--shadow-float); cursor: pointer; flex-shrink: 0; margin-top: -15px; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.5); display: none; align-items: flex-end; justify-content: center; z-index: 100000; }
-        .modal-overlay.active { display: flex; }
+        .modal-overlay.active { display: flex !important; }
         .modal-card { background: #ffffff; width: 100%; max-width: 440px; border-radius: 24px 24px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .modal-header h3 { font-size: 16px; font-weight: 700; }
-        .close-btn { border: none; background: #f1f5f9; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; justify-content: center; }
+        .close-btn { border: none; background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; justify-content: center; }
 
         .form-group { display: flex; flex-direction: column; gap: 12px; }
         .form-control { display: flex; flex-direction: column; gap: 4px; }
@@ -355,7 +355,7 @@
 
     document.getElementById('btn-login-google').addEventListener('click', () => {
         const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithRedirect(provider);
+        auth.signInWithPopup(provider).catch(err => alert("Gagal Login: " + err.message));
     });
 
     document.getElementById('btn-logout').addEventListener('click', () => auth.signOut());
@@ -403,13 +403,15 @@
     }
 
     function openModal() {
-        document.getElementById('modal-overlay').classList.add('active');
+        const modal = document.getElementById('modal-overlay');
+        modal.classList.add('active');
         document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
         updateCategoryOptions();
     }
     
     function closeModal() { 
-        document.getElementById('modal-overlay').classList.remove('active'); 
+        const modal = document.getElementById('modal-overlay');
+        modal.classList.remove('active'); 
     }
 
     function updateCategoryOptions() {
@@ -509,14 +511,14 @@
             `).join('');
 
             document.querySelectorAll('.btn-del').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.onclick = function() {
                     const id = parseInt(this.getAttribute('data-id'));
                     if (confirm('Hapus transaksi ini?')) {
                         transactions = transactions.filter(t => t.id !== id);
                         renderUI();
                         saveToCloud();
                     }
-                });
+                };
             });
         }
 
@@ -538,7 +540,7 @@
         }).join('');
     }
 
-    // Tombol Event Handler Utama
+    // Direct Event Binds
     document.getElementById('btn-nav-0').onclick = () => switchTab('page-beranda', 0);
     document.getElementById('btn-nav-1').onclick = () => switchTab('page-transaksi', 1);
     document.getElementById('btn-nav-2').onclick = () => switchTab('page-anggaran', 2);
@@ -547,8 +549,6 @@
     document.getElementById('btn-nav-add').onclick = openModal;
     document.getElementById('top-add-btn').onclick = openModal;
     document.getElementById('top-search-btn').onclick = () => switchTab('page-transaksi', 1);
-    
-    // Tombol Close Modal (✕)
     document.getElementById('btn-close-modal').onclick = closeModal;
 
     document.getElementById('month-filter').onchange = renderUI;
@@ -556,7 +556,7 @@
     document.getElementById('filter-type').onchange = renderUI;
     document.getElementById('input-type').onchange = updateCategoryOptions;
 
-    // Tombol Simpan Transaksi
+    // Simpan Transaksi
     document.getElementById('btn-save-tx').onclick = function() {
         const desc = document.getElementById('input-desc').value.trim();
         const amount = parseFloat(document.getElementById('input-amount').value);
