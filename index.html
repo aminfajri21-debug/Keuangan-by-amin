@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=6">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=6">
-    <link rel="manifest" href="manifest.json?v=6">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=7">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=7">
+    <link rel="manifest" href="manifest.json?v=7">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -158,7 +158,6 @@
 
     <select class="month-select" id="month-filter" onchange="renderUI()"></select>
 
-    <!-- PAGE 1: BERANDA -->
     <div id="page-beranda" class="page-view active">
         <div style="margin-bottom:16px;">
             <h1 id="user-greeting" style="font-size: 22px; font-weight: 800; color: #0f172a;">Dashboard</h1>
@@ -215,7 +214,6 @@
         </div>
     </div>
 
-    <!-- PAGE 2: TRANSAKSI -->
     <div id="page-transaksi" class="page-view">
         <div class="section-header"><span>Daftar Transaksi</span></div>
         <div class="filter-group">
@@ -231,7 +229,6 @@
         </div>
     </div>
 
-    <!-- PAGE 3: ANGGARAN & KELOLA KATEGORI BARU -->
     <div id="page-anggaran" class="page-view">
         <div class="section-header">
             <span>Anggaran Bulanan</span>
@@ -258,7 +255,6 @@
         </div>
     </div>
 
-    <!-- PAGE 4: LAINNYA -->
     <div id="page-lainnya" class="page-view">
         <div class="section-header"><span>Pengaturan & Akun</span></div>
         <div class="section-card">
@@ -275,7 +271,6 @@
     <button class="nav-item" id="btn-nav-3" onclick="switchTab('page-lainnya', 3)" type="button">Lainnya</button>
 </div>
 
-<!-- MODAL 1: TRANSAKSI DENGAN UPLOAD BUKTI STRUK -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -299,7 +294,6 @@
     </div>
 </div>
 
-<!-- MODAL 2: EDIT TARGET GOAL -->
 <div class="modal-overlay" id="modal-goal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -320,7 +314,6 @@
     </div>
 </div>
 
-<!-- MODAL 3: TAMBAH KATEGORI BARU KUSTOM -->
 <div class="modal-overlay" id="modal-cat-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -349,9 +342,8 @@
 </div>
 
 <script>
-    // Register Service Worker agar PWA didukung sistem Android Share Target
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW reg error:', err));
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Error:', err));
     }
 
     const firebaseConfig = {
@@ -416,24 +408,46 @@
 
         if (title || text) {
             openModal();
-            let fullText = (title + ' ' + text).toLowerCase();
-            
-            // Deteksi Otomatis Pemasukan vs Pengeluaran dari Teks Share
-            const isIncoming = /masuk|terima|diterima|topup|top up|kredit|penerimaan/i.test(fullText);
-            document.getElementById('input-type').value = isIncoming ? 'masuk' : 'keluar';
-
-            const rpMatch = fullText.match(/(?:rp|idr)\s*([\d\.,]+)/i);
-            if (rpMatch) {
-                let cleanAmt = rpMatch[1].replace(/\./g, '').replace(/,/g, '');
-                document.getElementById('input-amount').value = cleanAmt;
-            }
-
-            document.getElementById('input-desc').value = title || 'Transaksi E-Wallet';
-            updateCategoryOptions();
+            let fullText = (title + ' ' + text);
+            analyzeParsedText(fullText);
         }
     }
 
-    // PINDAI FOTO BUKTI STRUK DENGAN DETEKSI OTOMATIS PEMASUKAN / PENGELUARAN
+    // ALGORITMA PEMINDAI TEKS & DETEKSI NAMA PENERIMA / PEMASUKAN PRESISI
+    function analyzeParsedText(rawText) {
+        const lowerText = rawText.toLowerCase();
+
+        // 1. Deteksi Jenis Pemasukan vs Pengeluaran
+        const isIncoming = /pemasukan|masuk|terima|diterima|topup|top up|kredit|transfer dari|penerimaan|cashback|refund/i.test(lowerText);
+        const typeSelect = document.getElementById('input-type');
+        typeSelect.value = isIncoming ? 'masuk' : 'keluar';
+        updateCategoryOptions();
+
+        // 2. Cari Angka Nominal Keuangan
+        const rpMatch = rawText.match(/(?:Rp|IDR|Total|Nominal|Jumlah)\s*[:\.]?\s*([\d\.,]+)/i) || rawText.match(/([\d\.,]{4,12})/);
+        if (rpMatch) {
+            let cleanAmt = rpMatch[1].replace(/\./g, '').replace(/,/g, '');
+            if(!isNaN(cleanAmt) && parseInt(cleanAmt) > 0) {
+                document.getElementById('input-amount').value = parseInt(cleanAmt);
+            }
+        }
+
+        // 3. Ekstrak Keterangan Nama Merchant / Penerima
+        let extractedDesc = '';
+        const targetMatch = rawText.match(/(?:ke|penerima|merchant|untuk|dari|transfer ke|kirim ke)\s*[:\.]?\s*([A-Za-z0-9\s]{3,20})/i);
+        if (targetMatch && targetMatch[1]) {
+            extractedDesc = targetMatch[1].trim();
+        } else {
+            // Ambil baris pertama yang berisi teks alfabet murni
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 3 && !/id|ref|no|tanggal|berhasil|sukses/i.test(l));
+            if (lines.length > 0) extractedDesc = lines[0];
+        }
+
+        if(extractedDesc) {
+            document.getElementById('input-desc').value = extractedDesc.substring(0, 25);
+        }
+    }
+
     function processReceiptImage(input) {
         if (!input.files || !input.files[0]) return;
         const file = input.files[0];
@@ -443,26 +457,7 @@
         Tesseract.recognize(file, 'ind+eng')
             .then(({ data: { text } }) => {
                 statusEl.innerText = '✅ Struk Berhasil Dipindai!';
-                const lowerText = text.toLowerCase();
-                
-                // Logika Cerdas Deteksi Pemasukan / Pengeluaran dari Foto
-                const isIncoming = /masuk|terima|diterima|topup|top up|kredit|transfer dari|penerimaan/i.test(lowerText);
-                const typeSelect = document.getElementById('input-type');
-                typeSelect.value = isIncoming ? 'masuk' : 'keluar';
-                updateCategoryOptions();
-
-                // Cari Angka Nominal
-                const rpMatch = text.match(/(?:Rp|IDR|Total|Nominal)\s*[:\.]?\s*([\d\.,]+)/i);
-                if (rpMatch) {
-                    let cleanAmt = rpMatch[1].replace(/\./g, '').replace(/,/g, '');
-                    document.getElementById('input-amount').value = cleanAmt;
-                }
-
-                // Ambil Keterangan Baris Pertama
-                const lines = text.split('\n').filter(l => l.trim().length > 3);
-                if (lines.length > 0) {
-                    document.getElementById('input-desc').value = lines[0].substring(0, 25);
-                }
+                analyzeParsedText(text);
             })
             .catch(err => {
                 statusEl.innerText = '❌ Gagal memindai struk.';
