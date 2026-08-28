@@ -7,10 +7,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Library OCR Tesseract untuk memindai teks/gambar struk -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=4">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=4">
-    <link rel="manifest" href="manifest.json?v=4">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=5">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=5">
+    <link rel="manifest" href="manifest.json?v=5">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -104,6 +106,9 @@
 
         .btn-del { border: none; background: none; color: #cbd5e1; font-size: 18px; cursor: pointer; padding: 4px 8px; }
         .btn-sm-action { border: none; background: #e0e7ff; color: var(--primary); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+
+        .ocr-upload-box { border: 2px dashed #cbd5e1; padding: 14px; border-radius: var(--radius-md); text-align: center; cursor: pointer; margin-bottom: 12px; background: #f8fafc; font-size: 12px; color: var(--text-sub); }
+        .ocr-upload-box:hover { border-color: var(--primary); background: #e0e7ff; }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; height: 60px; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08); display: flex; justify-content: space-around; align-items: center; z-index: 99999; }
         .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-sub); border: none; background: transparent; cursor: pointer; width: 20%; gap: 2px; }
@@ -271,17 +276,24 @@
     <button class="nav-item" id="btn-nav-3" onclick="switchTab('page-lainnya', 3)" type="button">Lainnya</button>
 </div>
 
-<!-- MODAL 1: TRANSAKSI -->
+<!-- MODAL 1: TRANSAKSI DENGAN UPLOAD BUKTI STRUK -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
             <h3>Tambah Transaksi</h3>
             <button class="close-btn" onclick="closeModal()" type="button">✕</button>
         </div>
+
+        <!-- FITUR OPTIONAL: SCAN STRUK TERIMA BUKTI -->
+        <div class="ocr-upload-box" onclick="document.getElementById('receipt-file-input').click()">
+            <span id="ocr-status">📷 Pindai Foto Struk / Bukti Transfer</span>
+            <input type="file" id="receipt-file-input" accept="image/*" style="display:none;" onchange="processReceiptImage(this)">
+        </div>
+
         <div class="form-group">
-            <div class="form-control"><label>Keterangan</label><input type="text" id="input-desc" placeholder="Contoh: Gaji, Makan"></div>
+            <div class="form-control"><label>Keterangan</label><input type="text" id="input-desc" placeholder="Contoh: Gaji, Makan, ShopeePay"></div>
             <div class="form-control"><label>Nominal (Rp)</label><input type="number" id="input-amount" placeholder="0"></div>
-            <div class="form-control"><label>Tipe</label><select id="input-type" onchange="updateCategoryOptions()"><option value="masuk">Pemasukan (+)</option><option value="keluar">Pengeluaran (-)</option></select></div>
+            <div class="form-control"><label>Tipe</label><select id="input-type" onchange="updateCategoryOptions()"><option value="keluar">Pengeluaran (-)</option><option value="masuk">Pemasukan (+)</option></select></div>
             <div class="form-control"><label>Kategori</label><select id="input-category"></select></div>
             <div class="form-control"><label>Tanggal</label><input type="date" id="input-date"></div>
             <button type="button" class="btn-submit" onclick="saveTransaction()">Simpan Transaksi</button>
@@ -386,12 +398,65 @@
                 }
                 updateMonthFilterOptions();
                 renderUI();
+                checkShareTargetData();
             });
         } else {
             currentUser = null;
             document.getElementById('auth-screen').style.display = 'flex';
         }
     });
+
+    // MENGELOLA DATA MUKTI DARI SHARE TARGET E-WALLET
+    function checkShareTargetData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title') || '';
+        const text = urlParams.get('text') || urlParams.get('url') || '';
+
+        if (title || text) {
+            openModal();
+            let fullText = (title + ' ' + text).trim();
+            
+            // Ekstrak angka/nominal setelah 'Rp' atau 'IDR'
+            const rpMatch = fullText.match(/(?:Rp|IDR)\s*([\d\.,]+)/i);
+            if (rpMatch) {
+                let cleanAmt = rpMatch[1].replace(/\./g, '').replace(/,/g, '');
+                document.getElementById('input-amount').value = cleanAmt;
+            }
+
+            document.getElementById('input-desc').value = title || 'Transaksi E-Wallet';
+            document.getElementById('input-type').value = 'keluar';
+            updateCategoryOptions();
+        }
+    }
+
+    // MEMINDAI GAMBAR BUKTI BUKTI TRANSFER DENGAN OCR (TESSERACT)
+    function processReceiptImage(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const statusEl = document.getElementById('ocr-status');
+        statusEl.innerText = '⏳ Memindai gambar struk...';
+
+        Tesseract.recognize(file, 'ind+eng')
+            .then(({ data: { text } }) => {
+                statusEl.innerText = '✅ Struk Berhasil Dipindai!';
+                
+                // Cari angka nominal
+                const rpMatch = text.match(/(?:Rp|IDR|Total)\s*[:\.]?\s*([\d\.,]+)/i);
+                if (rpMatch) {
+                    let cleanAmt = rpMatch[1].replace(/\./g, '').replace(/,/g, '');
+                    document.getElementById('input-amount').value = cleanAmt;
+                }
+
+                // Tebak keterangan merchant
+                const lines = text.split('\n').filter(l => l.trim().length > 3);
+                if (lines.length > 0) {
+                    document.getElementById('input-desc').value = lines[0].substring(0, 25);
+                }
+            })
+            .catch(err => {
+                statusEl.innerText = '❌ Gagal memindai struk.';
+            });
+    }
 
     function doLogin() {
         const provider = new firebase.auth.GoogleAuthProvider();
