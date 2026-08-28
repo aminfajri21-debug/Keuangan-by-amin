@@ -8,9 +8,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=3">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=3">
-    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=4">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=4">
+    <link rel="manifest" href="manifest.json?v=4">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -85,7 +85,7 @@
         .chart-bar { width: 100%; max-width: 48px; border-radius: 8px 8px 0 0; transition: height 0.5s ease; min-height: 4px; }
         .chart-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-top: 8px; text-align: center; }
 
-        .tx-row { display: grid; grid-template-columns: 1fr 1.2fr 1fr; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8fafc; font-size: 13px; }
+        .tx-row { display: grid; grid-template-columns: 1fr 1.2fr 1fr 30px; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8fafc; font-size: 13px; }
         .tx-date { font-size: 11px; color: var(--text-sub); }
         .tx-desc { font-weight: 600; }
         .tx-desc small { display: block; font-size: 10px; color: var(--text-sub); }
@@ -103,7 +103,7 @@
         .search-input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: var(--radius-md); font-size: 13px; outline: none; }
 
         .btn-del { border: none; background: none; color: #cbd5e1; font-size: 18px; cursor: pointer; padding: 4px 8px; }
-        .btn-sm-action { border: none; background: #f1f5f9; color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; cursor: pointer; }
+        .btn-sm-action { border: none; background: #e0e7ff; color: var(--primary); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; height: 60px; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08); display: flex; justify-content: space-around; align-items: center; z-index: 99999; }
         .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-sub); border: none; background: transparent; cursor: pointer; width: 20%; gap: 2px; }
@@ -167,10 +167,9 @@
             <div class="metric-card"><label>Transaksi</label><div class="value val-trans" id="val-trans">0</div></div>
         </div>
 
-        <!-- GOALS / TARGET KEUANGAN DENGAN TOMBOL EDIT -->
         <div class="goal-card">
             <div class="goal-header">
-                <span class="goal-title" id="goal-title-text">🎯 Goal: 10 Juta Pertama</span>
+                <span class="goal-title" id="goal-title-text">🎯 Goal: Target Keuangan</span>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span class="goal-pct" id="goal-pct">0%</span>
                     <button class="btn-sm-action" style="background:rgba(255,255,255,0.2); color:#fff;" onclick="openGoalModal()">Edit</button>
@@ -181,11 +180,10 @@
             </div>
             <div class="goal-subtext">
                 <span>Terkumpul: <strong id="goal-current">Rp 0</strong></span>
-                <span>Target: <strong id="goal-target-text">Rp 10.000.000</strong></span>
+                <span>Target: <strong id="goal-target-text">Rp 0</strong></span>
             </div>
         </div>
 
-        <!-- GRAFIK ARUS KAS -->
         <div class="section-card">
             <div class="section-header"><span>Grafik Arus Kas</span></div>
             <div class="chart-native-wrap">
@@ -229,29 +227,29 @@
         </div>
     </div>
 
-    <!-- PAGE 3: ANGGARAN & DENGAN TOMBOL TAMBAH KATEGORI BARU -->
+    <!-- PAGE 3: ANGGARAN & KELOLA KATEGORI BARU -->
     <div id="page-anggaran" class="page-view">
         <div class="section-header">
             <span>Anggaran Bulanan</span>
-            <button class="btn-sm-action" onclick="openNewCategoryModal()">+ Kategori Baru</button>
+            <button class="btn-sm-action" onclick="openNewCategoryModal()">+ Tambah Kategori Baru</button>
         </div>
         <div class="section-card">
-            <div class="section-header" style="font-size:13px;"><span>Atur Limit Anggaran</span></div>
+            <div class="section-header" style="font-size:13px;"><span>Atur / Edit Limit Anggaran</span></div>
             <div class="form-group">
                 <div class="form-control">
-                    <label>Kategori Pengeluaran</label>
+                    <label>Pilih Kategori</label>
                     <select id="budget-category"></select>
                 </div>
                 <div class="form-control">
-                    <label>Limit Anggaran (Rp)</label>
+                    <label>Limit Anggaran Bulanan (Rp)</label>
                     <input type="number" id="budget-limit" placeholder="Contoh: 1000000">
                 </div>
-                <button type="button" class="btn-submit" onclick="saveBudget()">Simpan Limit</button>
+                <button type="button" class="btn-submit" onclick="saveBudget()">Simpan Limit Anggaran</button>
             </div>
         </div>
 
         <div class="section-card">
-            <div class="section-header" style="font-size:13px;"><span>Status Anggaran</span></div>
+            <div class="section-header" style="font-size:13px;"><span>Status Pengeluaran vs Anggaran</span></div>
             <div id="budget-list-container"></div>
         </div>
     </div>
@@ -265,7 +263,6 @@
     </div>
 </div>
 
-<!-- NAVIGASI BAWAH -->
 <div class="bottom-nav">
     <button class="nav-item active" id="btn-nav-0" onclick="switchTab('page-beranda', 0)" type="button">Beranda</button>
     <button class="nav-item" id="btn-nav-1" onclick="switchTab('page-transaksi', 1)" type="button">Transaksi</button>
@@ -274,7 +271,7 @@
     <button class="nav-item" id="btn-nav-3" onclick="switchTab('page-lainnya', 3)" type="button">Lainnya</button>
 </div>
 
-<!-- MODAL 1: FORM TRANSAKSI -->
+<!-- MODAL 1: TRANSAKSI -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -292,7 +289,7 @@
     </div>
 </div>
 
-<!-- MODAL 2: EDIT GOALS / TARGET KEUANGAN -->
+<!-- MODAL 2: EDIT TARGET GOAL -->
 <div class="modal-overlay" id="modal-goal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -302,30 +299,41 @@
         <div class="form-group">
             <div class="form-control">
                 <label>Nama Target (Goal)</label>
-                <input type="text" id="input-goal-title" placeholder="Contoh: Tabungan Laptop Baru">
+                <input type="text" id="input-goal-title" placeholder="Contoh: Tabungan Motor Baru">
             </div>
             <div class="form-control">
                 <label>Target Nominal (Rp)</label>
-                <input type="number" id="input-goal-target" placeholder="Contoh: 10000000">
+                <input type="number" id="input-goal-target" placeholder="Contoh: 15000000">
             </div>
             <button type="button" class="btn-submit" onclick="saveGoal()">Simpan Target</button>
         </div>
     </div>
 </div>
 
-<!-- MODAL 3: TAMBAH KATEGORI PENGELUARAN BARU -->
+<!-- MODAL 3: TAMBAH KATEGORI BARU KUSTOM -->
 <div class="modal-overlay" id="modal-cat-overlay">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>Tambah Kategori Pengeluaran</h3>
+            <h3>Tambah Kategori Baru</h3>
             <button class="close-btn" onclick="closeNewCategoryModal()" type="button">✕</button>
         </div>
         <div class="form-group">
             <div class="form-control">
-                <label>Nama Kategori Baru</label>
-                <input type="text" id="input-new-cat" placeholder="Contoh: Asuransi, Belanja">
+                <label>Jenis Kategori</label>
+                <select id="input-new-cat-type">
+                    <option value="keluar">Pengeluaran (-)</option>
+                    <option value="masuk">Pemasukan (+)</option>
+                </select>
             </div>
-            <button type="button" class="btn-submit" onclick="saveNewCategory()">Tambah Kategori</button>
+            <div class="form-control">
+                <label>Nama Kategori Baru</label>
+                <input type="text" id="input-new-cat-name" placeholder="Contoh: Asuransi, Belanja, Freelance">
+            </div>
+            <div class="form-control">
+                <label>Limit Anggaran Awal (Kosongkan jika Pemasukan)</label>
+                <input type="number" id="input-new-cat-limit" placeholder="Contoh: 500000">
+            </div>
+            <button type="button" class="btn-submit" onclick="saveNewCategory()">Tambah & Simpan</button>
         </div>
     </div>
 </div>
@@ -371,11 +379,9 @@
                     categoryBudgets = data.budgets || categoryBudgets;
                     userGoal = data.goal || userGoal;
 
-                    // Menggabungkan kategori kustom pengeluaran jika ada
-                    if (data.customCategories) {
-                        data.customCategories.forEach(c => {
-                            if (!categories.keluar.includes(c)) categories.keluar.push(c);
-                        });
+                    if (data.categories) {
+                        if (data.categories.keluar) categories.keluar = data.categories.keluar;
+                        if (data.categories.masuk) categories.masuk = data.categories.masuk;
                     }
                 }
                 updateMonthFilterOptions();
@@ -402,7 +408,7 @@
                 transactions: transactions,
                 budgets: categoryBudgets,
                 goal: userGoal,
-                customCategories: categories.keluar
+                categories: categories
             });
         }
     }
@@ -466,16 +472,14 @@
         document.getElementById('val-keluar').innerText = fmtRp(totalKeluar);
         document.getElementById('val-trans').innerText = filteredTx.length;
 
-        // Render Data Goal
         const targetVal = userGoal.target || 10000000;
         const goalPct = Math.min(100, Math.round((Math.max(0, globalSaldo) / targetVal) * 100));
-        document.getElementById('goal-title-text').innerText = '🎯 Goal: ' + (userGoal.title || 'Target Keuangan');
+        document.getElementById('goal-title-text').innerText = '🎯 ' + (userGoal.title || 'Goal Keuangan');
         document.getElementById('goal-pct').innerText = goalPct + '%';
         document.getElementById('goal-progress-bar').style.width = goalPct + '%';
         document.getElementById('goal-current').innerText = fmtRp(Math.max(0, globalSaldo));
         document.getElementById('goal-target-text').innerText = fmtRp(targetVal);
 
-        // Update Grafik Bar Arus Kas
         const maxVal = Math.max(totalMasuk, totalKeluar, 1);
         document.getElementById('bar-masuk').style.height = Math.round((totalMasuk / maxVal) * 100) + '%';
         document.getElementById('bar-keluar').style.height = Math.round((totalKeluar / maxVal) * 100) + '%';
@@ -489,6 +493,7 @@
                     <span class="tx-date">${t.date}</span>
                     <div class="tx-desc">${t.desc}<small>${t.category}</small></div>
                     <span class="tx-amount ${t.type === 'masuk' ? 'plus' : 'minus'}">${t.type === 'masuk' ? '+' : '-'}${fmtRp(t.amount)}</span>
+                    <button class="btn-del" onclick="deleteTransaction(${t.id})" type="button">✕</button>
                 </div>
             `).join('');
         }
@@ -503,7 +508,7 @@
             fullTxContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#94a3b8;">Tidak ada transaksi ditemukan.</div>';
         } else {
             fullTxContainer.innerHTML = searchedTx.map(t => `
-                <div class="tx-row" style="grid-template-columns: 1fr 1fr 1.2fr 30px;">
+                <div class="tx-row">
                     <span class="tx-date">${t.date}</span>
                     <div class="tx-desc">${t.desc}<small>${t.category}</small></div>
                     <span class="tx-amount ${t.type === 'masuk' ? 'plus' : 'minus'}">${t.type === 'masuk' ? '+' : '-'}${fmtRp(t.amount)}</span>
@@ -586,12 +591,15 @@
     function saveBudget() {
         const cat = document.getElementById('budget-category').value;
         const limit = parseFloat(document.getElementById('budget-limit').value);
-        if(!limit || isNaN(limit)) return;
+        if(isNaN(limit) || limit < 0) {
+            alert("Harap masukkan nominal limit yang valid!");
+            return;
+        }
         categoryBudgets[cat] = limit;
         document.getElementById('budget-limit').value = '';
         renderUI();
         saveToCloud();
-        alert(`Anggaran ${cat} berhasil diperbarui!`);
+        alert(`Limit Anggaran ${cat} berhasil diperbarui!`);
     }
 
     function saveGoal() {
@@ -610,17 +618,29 @@
     }
 
     function saveNewCategory() {
-        const catName = document.getElementById('input-new-cat').value.trim();
-        if(!catName) return;
+        const catType = document.getElementById('input-new-cat-type').value;
+        const catName = document.getElementById('input-new-cat-name').value.trim();
+        const catLimit = parseFloat(document.getElementById('input-new-cat-limit').value) || 0;
 
-        if(!categories.keluar.includes(catName)) {
-            categories.keluar.push(catName);
-            categoryBudgets[catName] = 0;
+        if(!catName) {
+            alert("Harap masukkan nama kategori baru!");
+            return;
+        }
+
+        if(!categories[catType].includes(catName)) {
+            categories[catType].push(catName);
+            if(catType === 'keluar') {
+                categoryBudgets[catName] = catLimit;
+            }
             saveToCloud();
             renderUI();
             alert(`Kategori "${catName}" berhasil ditambahkan!`);
+        } else {
+            alert("Kategori tersebut sudah ada!");
         }
-        document.getElementById('input-new-cat').value = '';
+
+        document.getElementById('input-new-cat-name').value = '';
+        document.getElementById('input-new-cat-limit').value = '';
         closeNewCategoryModal();
     }
 </script>
