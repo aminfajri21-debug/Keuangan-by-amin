@@ -117,7 +117,7 @@
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .modal-header h3 { font-size: 16px; font-weight: 700; }
-        .close-btn { border: none; background: #f1f5f9; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; color: var(--text-sub); }
+        .close-btn { border: none; background: #f1f5f9; width: 30px; height: 30px; border-radius: 50%; font-size: 14px; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; justify-content: center; }
 
         .form-group { display: flex; flex-direction: column; gap: 12px; }
         .form-control { display: flex; flex-direction: column; gap: 4px; }
@@ -264,7 +264,7 @@
     <div id="page-lainnya" class="page-view">
         <div class="page-title">
             <h1>Pengaturan & Akun</h1>
-            <p>Keluar atau cadangkan data.</p>
+            <p>Keluar dari akun Anda.</p>
         </div>
 
         <div class="dashboard-row">
@@ -284,6 +284,7 @@
     <button class="nav-item" id="btn-nav-3" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg><span>Lainnya</span></button>
 </div>
 
+<!-- MODAL FORM TRANSAKSI -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -330,7 +331,6 @@
 
     const fmtRp = (num) => 'Rp ' + Math.abs(num).toLocaleString('id-ID');
 
-    // Mencegah Auth Loop & Mengamankan Sesi
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
@@ -353,7 +353,6 @@
         }
     });
 
-    // Login Menggunakan Redirect (Sangat Stabil di HP & Komputer)
     document.getElementById('btn-login-google').addEventListener('click', () => {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithRedirect(provider);
@@ -408,7 +407,10 @@
         document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
         updateCategoryOptions();
     }
-    function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+    
+    function closeModal() { 
+        document.getElementById('modal-overlay').classList.remove('active'); 
+    }
 
     function updateCategoryOptions() {
         const type = document.getElementById('input-type').value;
@@ -536,29 +538,32 @@
         }).join('');
     }
 
-    // Handlers
-    document.getElementById('btn-nav-0').addEventListener('click', () => switchTab('page-beranda', 0));
-    document.getElementById('btn-nav-1').addEventListener('click', () => switchTab('page-transaksi', 1));
-    document.getElementById('btn-nav-2').addEventListener('click', () => switchTab('page-anggaran', 2));
-    document.getElementById('btn-nav-3').addEventListener('click', () => switchTab('page-lainnya', 3));
-    document.getElementById('btn-nav-add').addEventListener('click', openModal);
-    document.getElementById('top-add-btn').addEventListener('click', openModal);
-    document.getElementById('top-search-btn').addEventListener('click', () => switchTab('page-transaksi', 1));
-    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+    // Tombol Event Handler Utama
+    document.getElementById('btn-nav-0').onclick = () => switchTab('page-beranda', 0);
+    document.getElementById('btn-nav-1').onclick = () => switchTab('page-transaksi', 1);
+    document.getElementById('btn-nav-2').onclick = () => switchTab('page-anggaran', 2);
+    document.getElementById('btn-nav-3').onclick = () => switchTab('page-lainnya', 3);
+    
+    document.getElementById('btn-nav-add').onclick = openModal;
+    document.getElementById('top-add-btn').onclick = openModal;
+    document.getElementById('top-search-btn').onclick = () => switchTab('page-transaksi', 1);
+    
+    // Tombol Close Modal (✕)
+    document.getElementById('btn-close-modal').onclick = closeModal;
 
-    document.getElementById('month-filter').addEventListener('change', renderUI);
-    document.getElementById('search-tx').addEventListener('input', renderUI);
-    document.getElementById('filter-type').addEventListener('change', renderUI);
-    document.getElementById('input-type').addEventListener('change', updateCategoryOptions);
+    document.getElementById('month-filter').onchange = renderUI;
+    document.getElementById('search-tx').oninput = renderUI;
+    document.getElementById('filter-type').onchange = renderUI;
+    document.getElementById('input-type').onchange = updateCategoryOptions;
 
-    // PENANGANAN INPUT TRANSAKSI TANPA MENGISIKAN FORM REFRESH
-    document.getElementById('btn-save-tx').addEventListener('click', () => {
+    // Tombol Simpan Transaksi
+    document.getElementById('btn-save-tx').onclick = function() {
         const desc = document.getElementById('input-desc').value.trim();
         const amount = parseFloat(document.getElementById('input-amount').value);
         const inputDate = document.getElementById('input-date').value;
 
-        if(!desc || !amount || !inputDate) {
-            alert("Harap isi semua data transaksi!");
+        if(!desc || isNaN(amount) || amount <= 0 || !inputDate) {
+            alert("Harap isi semua kolom dengan benar!");
             return;
         }
 
@@ -575,24 +580,25 @@
 
         transactions.unshift(newTx);
         closeModal();
+        
         document.getElementById('input-desc').value = '';
         document.getElementById('input-amount').value = '';
 
         updateMonthFilterOptions(txMonth);
         renderUI();
         saveToCloud();
-    });
+    };
 
-    document.getElementById('btn-save-budget').addEventListener('click', () => {
+    document.getElementById('btn-save-budget').onclick = function() {
         const cat = document.getElementById('budget-category').value;
         const limit = parseFloat(document.getElementById('budget-limit').value);
-        if(!limit) return;
+        if(!limit || isNaN(limit)) return;
         categoryBudgets[cat] = limit;
         document.getElementById('budget-limit').value = '';
         renderUI();
         saveToCloud();
         alert(`Anggaran ${cat} berhasil diperbarui!`);
-    });
+    };
 </script>
 
 </body>
