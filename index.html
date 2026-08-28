@@ -157,11 +157,8 @@
         <img src="https://via.placeholder.com/36" class="user-profile" id="user-avatar" title="Klik untuk Logout">
     </div>
 
-    <select class="month-select" id="month-filter">
-        <option value="2026-08">Agustus 2026</option>
-        <option value="2026-09">September 2026</option>
-        <option value="2026-10">Oktober 2026</option>
-    </select>
+    <!-- FILTER BULAN DINAMIS -->
+    <select class="month-select" id="month-filter"></select>
 
     <!-- PAGE 1: BERANDA -->
     <div id="page-beranda" class="page-view active">
@@ -342,7 +339,6 @@
 
     const fmtRp = (num) => 'Rp ' + Math.abs(num).toLocaleString('id-ID');
 
-    // SINKRONISASI REALTIME & FALLBACK LOCALSTORAGE
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
@@ -356,6 +352,7 @@
                     transactions = data.transactions || [];
                     categoryBudgets = data.budgets || categoryBudgets;
                 }
+                updateMonthFilterOptions();
                 renderUI();
             });
         } else {
@@ -375,15 +372,32 @@
     });
 
     function saveToCloud() {
-        renderUI();
         if (currentUser) {
             db.ref('users/' + currentUser.uid).set({
                 transactions: transactions,
                 budgets: categoryBudgets
-            }).catch((err) => {
-                console.warn("Gagal simpan ke cloud, data tersimpan secara lokal:", err);
             });
         }
+    }
+
+    function updateMonthFilterOptions(selectedMonth = null) {
+        const select = document.getElementById('month-filter');
+        const months = new Set();
+        
+        // Buat opsi dari bulan transaksi yang ada + bulan saat ini
+        const nowMonth = new Date().toISOString().slice(0, 7);
+        months.add(nowMonth);
+        transactions.forEach(t => { if (t.date) months.add(t.date.slice(0, 7)); });
+
+        const sortedMonths = Array.from(months).sort().reverse();
+        const currentVal = selectedMonth || select.value || nowMonth;
+
+        select.innerHTML = sortedMonths.map(m => {
+            const [y, mm] = m.split('-');
+            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            const label = `${monthNames[parseInt(mm)-1]} ${y}`;
+            return `<option value="${m}" ${m === currentVal ? 'selected' : ''}>${label}</option>`;
+        }).join('');
     }
 
     function switchTab(pageId, navIndex) {
@@ -433,8 +447,8 @@
     }
 
     function renderUI() {
-        const filterMonth = document.getElementById('month-filter').value;
-        const filteredTx = transactions.filter(t => t.date.startsWith(filterMonth));
+        const filterMonth = document.getElementById('month-filter').value || new Date().toISOString().slice(0, 7);
+        const filteredTx = transactions.filter(t => t.date && t.date.startsWith(filterMonth));
 
         let totalMasuk = 0, totalKeluar = 0, catTotals = {}, globalSaldo = 0;
         transactions.forEach(t => { if (t.type === 'masuk') globalSaldo += t.amount; else globalSaldo -= t.amount; });
@@ -458,7 +472,7 @@
         renderChart(totalMasuk, totalKeluar);
 
         const dbTxContainer = document.getElementById('dashboard-tx-container');
-        if (filteredTx.length === 0) dbTxContainer.innerHTML = '<div class="empty-state">Belum ada transaksi.</div>';
+        if (filteredTx.length === 0) dbTxContainer.innerHTML = '<div class="empty-state">Belum ada transaksi di bulan ini.</div>';
         else {
             dbTxContainer.innerHTML = filteredTx.slice(0, 5).map(t => `
                 <div class="tx-row">
@@ -506,6 +520,7 @@
                     const id = parseInt(this.getAttribute('data-id'));
                     if (confirm('Hapus transaksi ini?')) {
                         transactions = transactions.filter(t => t.id !== id);
+                        renderUI();
                         saveToCloud();
                     }
                 });
@@ -548,19 +563,26 @@
     document.getElementById('tx-form').addEventListener('submit', (e) => {
         e.preventDefault();
 
+        const inputDate = document.getElementById('input-date').value;
+        const txMonth = inputDate.slice(0, 7);
+
         const newTx = {
             id: Date.now(),
             desc: document.getElementById('input-desc').value,
             amount: parseFloat(document.getElementById('input-amount').value),
             type: document.getElementById('input-type').value,
             category: document.getElementById('input-category').value,
-            date: document.getElementById('input-date').value
+            date: inputDate
         };
 
         transactions.unshift(newTx);
         closeModal();
         document.getElementById('input-desc').value = '';
         document.getElementById('input-amount').value = '';
+
+        // Otomatis ubah filter ke bulan transaksi yang baru dimasukkan
+        updateMonthFilterOptions(txMonth);
+        renderUI();
         saveToCloud();
     });
 
@@ -569,6 +591,7 @@
         const cat = document.getElementById('budget-category').value;
         categoryBudgets[cat] = parseFloat(document.getElementById('budget-limit').value);
         document.getElementById('budget-limit').value = '';
+        renderUI();
         saveToCloud();
         alert(`Anggaran ${cat} berhasil diperbarui!`);
     });
