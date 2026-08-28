@@ -142,7 +142,6 @@
 </head>
 <body>
 
-<!-- LAYAR LOGIN GOOGLE -->
 <div class="auth-screen" id="auth-screen">
     <div class="auth-card">
         <h2>💰 Money Manager</h2>
@@ -312,7 +311,7 @@
             <div class="form-control"><label>Tipe Transaksi</label><select id="input-type"><option value="masuk">Pemasukan (+)</option><option value="keluar">Pengeluaran (-)</option></select></div>
             <div class="form-control"><label>Kategori</label><select id="input-category"></select></div>
             <div class="form-control"><label>Tanggal</label><input type="date" id="input-date" required></div>
-            <button type="submit" class="btn-submit">Simpan Transaksi</button>
+            <button type="submit" class="btn-submit" id="btn-submit-tx">Simpan Transaksi</button>
         </form>
     </div>
 </div>
@@ -354,11 +353,14 @@
             document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
             document.getElementById('user-greeting').innerText = `Halo, ${user.displayName.split(' ')[0]}!`;
             
+            // SESUAIKAN DENGAN PATH RULES: users/$uid
             db.ref('users/' + user.uid).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     transactions = data.transactions || [];
                     categoryBudgets = data.budgets || categoryBudgets;
+                } else {
+                    transactions = [];
                 }
                 renderUI();
             });
@@ -378,12 +380,20 @@
         if(confirm("Apakah Anda ingin keluar (logout)?")) auth.signOut();
     });
 
-    function saveToCloud() {
+    function saveToCloud(onComplete) {
         if (currentUser) {
             db.ref('users/' + currentUser.uid).set({
                 transactions: transactions,
                 budgets: categoryBudgets
+            }).then(() => {
+                if(onComplete) onComplete(true);
+            }).catch((err) => {
+                alert("Gagal menyimpan ke server: " + err.message);
+                if(onComplete) onComplete(false);
             });
+        } else {
+            alert("Anda belum login.");
+            if(onComplete) onComplete(false);
         }
     }
 
@@ -548,18 +558,32 @@
 
     document.getElementById('tx-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        transactions.unshift({
+        const submitBtn = document.getElementById('btn-submit-tx');
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Menyimpan...';
+
+        const newTx = {
             id: Date.now(),
             desc: document.getElementById('input-desc').value,
             amount: parseFloat(document.getElementById('input-amount').value),
             type: document.getElementById('input-type').value,
             category: document.getElementById('input-category').value,
             date: document.getElementById('input-date').value
+        };
+
+        transactions.unshift(newTx);
+
+        saveToCloud((success) => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Simpan Transaksi';
+            if(success) {
+                closeModal();
+                document.getElementById('input-desc').value = '';
+                document.getElementById('input-amount').value = '';
+            } else {
+                transactions.shift(); // Batalkan jika gagal
+            }
         });
-        closeModal();
-        document.getElementById('input-desc').value = '';
-        document.getElementById('input-amount').value = '';
-        saveToCloud();
     });
 
     document.getElementById('budget-form').addEventListener('submit', (e) => {
@@ -567,8 +591,9 @@
         const cat = document.getElementById('budget-category').value;
         categoryBudgets[cat] = parseFloat(document.getElementById('budget-limit').value);
         document.getElementById('budget-limit').value = '';
-        saveToCloud();
-        alert(`Anggaran ${cat} berhasil diperbarui!`);
+        saveToCloud((success) => {
+            if(success) alert(`Anggaran ${cat} berhasil diperbarui!`);
+        });
     });
 </script>
 
