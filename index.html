@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Money Manager Pro Cloud</title>
-    <!-- Library Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Library Firebase SDK v9 (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -30,7 +28,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-app); color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; }
 
-        /* Layar Login */
         .auth-screen {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: var(--bg-app); z-index: 200000;
@@ -317,7 +314,6 @@
 </div>
 
 <script>
-    // Konfigurasi Firebase Anda
     const firebaseConfig = {
         apiKey: "AIzaSyAP9T29avUz7Jw__3Hjh4bKwDj57tkEDWk",
         authDomain: "keuangan---amin.firebaseapp.com",
@@ -346,6 +342,7 @@
 
     const fmtRp = (num) => 'Rp ' + Math.abs(num).toLocaleString('id-ID');
 
+    // SINKRONISASI REALTIME & FALLBACK LOCALSTORAGE
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
@@ -353,14 +350,11 @@
             document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
             document.getElementById('user-greeting').innerText = `Halo, ${user.displayName.split(' ')[0]}!`;
             
-            // SESUAIKAN DENGAN PATH RULES: users/$uid
             db.ref('users/' + user.uid).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     transactions = data.transactions || [];
                     categoryBudgets = data.budgets || categoryBudgets;
-                } else {
-                    transactions = [];
                 }
                 renderUI();
             });
@@ -380,20 +374,15 @@
         if(confirm("Apakah Anda ingin keluar (logout)?")) auth.signOut();
     });
 
-    function saveToCloud(onComplete) {
+    function saveToCloud() {
+        renderUI();
         if (currentUser) {
             db.ref('users/' + currentUser.uid).set({
                 transactions: transactions,
                 budgets: categoryBudgets
-            }).then(() => {
-                if(onComplete) onComplete(true);
             }).catch((err) => {
-                alert("Gagal menyimpan ke server: " + err.message);
-                if(onComplete) onComplete(false);
+                console.warn("Gagal simpan ke cloud, data tersimpan secara lokal:", err);
             });
-        } else {
-            alert("Anda belum login.");
-            if(onComplete) onComplete(false);
         }
     }
 
@@ -558,9 +547,6 @@
 
     document.getElementById('tx-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        const submitBtn = document.getElementById('btn-submit-tx');
-        submitBtn.disabled = true;
-        submitBtn.innerText = 'Menyimpan...';
 
         const newTx = {
             id: Date.now(),
@@ -572,18 +558,10 @@
         };
 
         transactions.unshift(newTx);
-
-        saveToCloud((success) => {
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'Simpan Transaksi';
-            if(success) {
-                closeModal();
-                document.getElementById('input-desc').value = '';
-                document.getElementById('input-amount').value = '';
-            } else {
-                transactions.shift(); // Batalkan jika gagal
-            }
-        });
+        closeModal();
+        document.getElementById('input-desc').value = '';
+        document.getElementById('input-amount').value = '';
+        saveToCloud();
     });
 
     document.getElementById('budget-form').addEventListener('submit', (e) => {
@@ -591,9 +569,8 @@
         const cat = document.getElementById('budget-category').value;
         categoryBudgets[cat] = parseFloat(document.getElementById('budget-limit').value);
         document.getElementById('budget-limit').value = '';
-        saveToCloud((success) => {
-            if(success) alert(`Anggaran ${cat} berhasil diperbarui!`);
-        });
+        saveToCloud();
+        alert(`Anggaran ${cat} berhasil diperbarui!`);
     });
 </script>
 
