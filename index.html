@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=7">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=7">
-    <link rel="manifest" href="manifest.json?v=7">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=8">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=8">
+    <link rel="manifest" href="manifest.json?v=8">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -413,18 +413,36 @@
         }
     }
 
-    // ALGORITMA PEMINDAI TEKS & DETEKSI NAMA PENERIMA / PEMASUKAN PRESISI
+    // ALGORITMA PERSISI DETEKSI SIMBOL + / - DAN KALIMAT KEUNGGULAN
     function analyzeParsedText(rawText) {
         const lowerText = rawText.toLowerCase();
+        let selectedType = 'keluar'; // Default tipe pengeluaran
 
-        // 1. Deteksi Jenis Pemasukan vs Pengeluaran
-        const isIncoming = /pemasukan|masuk|terima|diterima|topup|top up|kredit|transfer dari|penerimaan|cashback|refund/i.test(lowerText);
+        // 1. CEK SIMBOL MURNI (+ ATAU -)
+        if (/\+\s*(?:rp|idr)?\s*[\d\.,]+/i.test(rawText) || /(?:rp|idr)?\s*\+\s*[\d\.,]+/i.test(rawText)) {
+            selectedType = 'masuk';
+        } else if (/-\s*(?:rp|idr)?\s*[\d\.,]+/i.test(rawText) || /(?:rp|idr)?\s*-\s*[\d\.,]+/i.test(rawText)) {
+            selectedType = 'keluar';
+        } else {
+            // 2. CEK KATAKUNCI KONTEKS JIKA SIMBOL TIDAK TERBACA DENGAN JELAS
+            const isExplicitIncoming = /transfer dari|terima dari|diterima dari|diterima|top up berhasil|topup berhasil|kredit|cashback|refund|uang masuk/i.test(lowerText);
+            const isExplicitOutgoing = /transfer ke|kirim ke|pembayaran ke|bayar ke|biaya admin|debit|pengeluaran/i.test(lowerText);
+
+            if (isExplicitIncoming && !isExplicitOutgoing) {
+                selectedType = 'masuk';
+            } else if (isExplicitOutgoing) {
+                selectedType = 'keluar';
+            } else if (/terima|masuk/i.test(lowerText) && !/kirim|bayar|ke/i.test(lowerText)) {
+                selectedType = 'masuk';
+            }
+        }
+
         const typeSelect = document.getElementById('input-type');
-        typeSelect.value = isIncoming ? 'masuk' : 'keluar';
+        typeSelect.value = selectedType;
         updateCategoryOptions();
 
-        // 2. Cari Angka Nominal Keuangan
-        const rpMatch = rawText.match(/(?:Rp|IDR|Total|Nominal|Jumlah)\s*[:\.]?\s*([\d\.,]+)/i) || rawText.match(/([\d\.,]{4,12})/);
+        // 3. AMBIL NOMINAL KEUTUHAN
+        const rpMatch = rawText.match(/(?:Rp|IDR|Total|Nominal|Jumlah|\+|\-)\s*[:\.]?\s*([\d\.,]+)/i) || rawText.match(/([\d\.,]{4,12})/);
         if (rpMatch) {
             let cleanAmt = rpMatch[1].replace(/\./g, '').replace(/,/g, '');
             if(!isNaN(cleanAmt) && parseInt(cleanAmt) > 0) {
@@ -432,14 +450,13 @@
             }
         }
 
-        // 3. Ekstrak Keterangan Nama Merchant / Penerima
+        // 4. MENCARI KETERANGAN (MERCHANT / PENERIMA / PENGIRIM)
         let extractedDesc = '';
-        const targetMatch = rawText.match(/(?:ke|penerima|merchant|untuk|dari|transfer ke|kirim ke)\s*[:\.]?\s*([A-Za-z0-9\s]{3,20})/i);
+        const targetMatch = rawText.match(/(?:ke|penerima|merchant|untuk|dari|transfer ke|kirim ke|transfer dari)\s*[:\.]?\s*([A-Za-z0-9\s]{3,20})/i);
         if (targetMatch && targetMatch[1]) {
             extractedDesc = targetMatch[1].trim();
         } else {
-            // Ambil baris pertama yang berisi teks alfabet murni
-            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 3 && !/id|ref|no|tanggal|berhasil|sukses/i.test(l));
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 3 && !/id|ref|no|tanggal|berhasil|sukses|total|transaksi/i.test(l));
             if (lines.length > 0) extractedDesc = lines[0];
         }
 
