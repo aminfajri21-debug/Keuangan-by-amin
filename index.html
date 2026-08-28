@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Money Manager Pro Cloud</title>
-
-    <!-- Favicon & Apple Touch Icon (Versi 2) -->
-    <link rel="icon" type="image/png" href="icon.png?v=2">
-    <link rel="apple-touch-icon" href="icon.png?v=2">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=3">
+    <link rel="manifest" href="manifest.json?v=3">
+    <meta name="theme-color" content="#6366f1">
 
     <style>
         :root {
@@ -77,9 +78,8 @@
         .goal-subtext { font-size: 12px; color: #c7d2fe; display: flex; justify-content: space-between; }
 
         .section-card { background: #ffffff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
-        .section-header { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }
+        .section-header { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* GRAFIK ARUS KAS NATIVE */
         .chart-native-wrap { display: flex; align-items: flex-end; justify-content: space-around; height: 140px; padding-top: 20px; border-bottom: 2px solid #e2e8f0; }
         .chart-bar-container { display: flex; flex-direction: column; align-items: center; width: 40%; height: 100%; justify-content: flex-end; }
         .chart-bar { width: 100%; max-width: 48px; border-radius: 8px 8px 0 0; transition: height 0.5s ease; min-height: 4px; }
@@ -93,7 +93,8 @@
         .tx-amount.plus { color: var(--success); }
         .tx-amount.minus { color: var(--danger); }
 
-        .cat-item { margin-bottom: 12px; }
+        .cat-item { margin-bottom: 14px; }
+        .cat-item:last-child { margin-bottom: 0; }
         .cat-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
         .cat-bar-bg { height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
         .cat-bar-fill { height: 100%; border-radius: 10px; }
@@ -102,6 +103,7 @@
         .search-input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: var(--radius-md); font-size: 13px; outline: none; }
 
         .btn-del { border: none; background: none; color: #cbd5e1; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+        .btn-sm-action { border: none; background: #f1f5f9; color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; cursor: pointer; }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; height: 60px; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08); display: flex; justify-content: space-around; align-items: center; z-index: 99999; }
         .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-sub); border: none; background: transparent; cursor: pointer; width: 20%; gap: 2px; }
@@ -165,23 +167,27 @@
             <div class="metric-card"><label>Transaksi</label><div class="value val-trans" id="val-trans">0</div></div>
         </div>
 
+        <!-- GOALS / TARGET KEUANGAN DENGAN TOMBOL EDIT -->
         <div class="goal-card">
             <div class="goal-header">
-                <span class="goal-title">🎯 Goal: 10 Juta Pertama</span>
-                <span class="goal-pct" id="goal-pct">0%</span>
+                <span class="goal-title" id="goal-title-text">🎯 Goal: 10 Juta Pertama</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="goal-pct" id="goal-pct">0%</span>
+                    <button class="btn-sm-action" style="background:rgba(255,255,255,0.2); color:#fff;" onclick="openGoalModal()">Edit</button>
+                </div>
             </div>
             <div class="goal-progress-bg">
                 <div class="goal-progress-fill" id="goal-progress-bar" style="width: 0%;"></div>
             </div>
             <div class="goal-subtext">
                 <span>Terkumpul: <strong id="goal-current">Rp 0</strong></span>
-                <span>Target: <strong>Rp 10.000.000</strong></span>
+                <span>Target: <strong id="goal-target-text">Rp 10.000.000</strong></span>
             </div>
         </div>
 
         <!-- GRAFIK ARUS KAS -->
         <div class="section-card">
-            <div class="section-header">Grafik Arus Kas</div>
+            <div class="section-header"><span>Grafik Arus Kas</span></div>
             <div class="chart-native-wrap">
                 <div class="chart-bar-container">
                     <div class="chart-bar" id="bar-masuk" style="height: 0%; background: #10b981;"></div>
@@ -197,19 +203,19 @@
         </div>
 
         <div class="section-card">
-            <div class="section-header">Pengeluaran per Kategori</div>
+            <div class="section-header"><span>Pengeluaran per Kategori</span></div>
             <div id="dashboard-cat-container"></div>
         </div>
 
         <div class="section-card">
-            <div class="section-header">Transaksi Terbaru</div>
+            <div class="section-header"><span>Transaksi Terbaru</span></div>
             <div id="dashboard-tx-container"></div>
         </div>
     </div>
 
     <!-- PAGE 2: TRANSAKSI -->
     <div id="page-transaksi" class="page-view">
-        <div class="section-header">Daftar Transaksi</div>
+        <div class="section-header"><span>Daftar Transaksi</span></div>
         <div class="filter-group">
             <input type="text" id="search-tx" class="search-input" placeholder="Cari transaksi..." oninput="renderUI()">
             <select id="filter-type" class="search-input" style="width: 120px;" onchange="renderUI()">
@@ -223,11 +229,14 @@
         </div>
     </div>
 
-    <!-- PAGE 3: ANGGARAN -->
+    <!-- PAGE 3: ANGGARAN & DENGAN TOMBOL TAMBAH KATEGORI BARU -->
     <div id="page-anggaran" class="page-view">
-        <div class="section-header">Anggaran Bulanan</div>
+        <div class="section-header">
+            <span>Anggaran Bulanan</span>
+            <button class="btn-sm-action" onclick="openNewCategoryModal()">+ Kategori Baru</button>
+        </div>
         <div class="section-card">
-            <div class="section-header" style="font-size:13px;">Atur Limit Anggaran</div>
+            <div class="section-header" style="font-size:13px;"><span>Atur Limit Anggaran</span></div>
             <div class="form-group">
                 <div class="form-control">
                     <label>Kategori Pengeluaran</label>
@@ -242,14 +251,14 @@
         </div>
 
         <div class="section-card">
-            <div class="section-header" style="font-size:13px;">Status Anggaran</div>
+            <div class="section-header" style="font-size:13px;"><span>Status Anggaran</span></div>
             <div id="budget-list-container"></div>
         </div>
     </div>
 
     <!-- PAGE 4: LAINNYA -->
     <div id="page-lainnya" class="page-view">
-        <div class="section-header">Pengaturan & Akun</div>
+        <div class="section-header"><span>Pengaturan & Akun</span></div>
         <div class="section-card">
             <button class="btn-danger-outline" onclick="doLogout()" type="button">Keluar (Logout)</button>
         </div>
@@ -265,7 +274,7 @@
     <button class="nav-item" id="btn-nav-3" onclick="switchTab('page-lainnya', 3)" type="button">Lainnya</button>
 </div>
 
-<!-- MODAL FORM TRANSAKSI -->
+<!-- MODAL 1: FORM TRANSAKSI -->
 <div class="modal-overlay" id="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -279,6 +288,44 @@
             <div class="form-control"><label>Kategori</label><select id="input-category"></select></div>
             <div class="form-control"><label>Tanggal</label><input type="date" id="input-date"></div>
             <button type="button" class="btn-submit" onclick="saveTransaction()">Simpan Transaksi</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 2: EDIT GOALS / TARGET KEUANGAN -->
+<div class="modal-overlay" id="modal-goal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Atur Target Keuangan (Goal)</h3>
+            <button class="close-btn" onclick="closeGoalModal()" type="button">✕</button>
+        </div>
+        <div class="form-group">
+            <div class="form-control">
+                <label>Nama Target (Goal)</label>
+                <input type="text" id="input-goal-title" placeholder="Contoh: Tabungan Laptop Baru">
+            </div>
+            <div class="form-control">
+                <label>Target Nominal (Rp)</label>
+                <input type="number" id="input-goal-target" placeholder="Contoh: 10000000">
+            </div>
+            <button type="button" class="btn-submit" onclick="saveGoal()">Simpan Target</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL 3: TAMBAH KATEGORI PENGELUARAN BARU -->
+<div class="modal-overlay" id="modal-cat-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Tambah Kategori Pengeluaran</h3>
+            <button class="close-btn" onclick="closeNewCategoryModal()" type="button">✕</button>
+        </div>
+        <div class="form-group">
+            <div class="form-control">
+                <label>Nama Kategori Baru</label>
+                <input type="text" id="input-new-cat" placeholder="Contoh: Asuransi, Belanja">
+            </div>
+            <button type="button" class="btn-submit" onclick="saveNewCategory()">Tambah Kategori</button>
         </div>
     </div>
 </div>
@@ -300,9 +347,10 @@
 
     let currentUser = null;
     let transactions = [];
+    let userGoal = { title: '10 Juta Pertama', target: 10000000 };
     let categoryBudgets = { 'Kos': 550000, 'Makan': 450000, 'Bensin': 150000, 'Kuota': 70000, 'Skincare': 115000, 'Alat Mandi': 78500, 'Jajan': 141350, 'Dana Darurat': 424050, 'RDPU': 424050, 'Tabungan': 424050 };
 
-    const categories = {
+    let categories = {
         masuk: ['Gaji', 'Bonus', 'Investasi', 'Lainnya'],
         keluar: ['Kos', 'Makan', 'Bensin', 'Kuota', 'Skincare', 'Alat Mandi', 'Jajan', 'Dana Darurat', 'RDPU', 'Tabungan']
     };
@@ -321,6 +369,14 @@
                 if (data) {
                     transactions = data.transactions || [];
                     categoryBudgets = data.budgets || categoryBudgets;
+                    userGoal = data.goal || userGoal;
+
+                    // Menggabungkan kategori kustom pengeluaran jika ada
+                    if (data.customCategories) {
+                        data.customCategories.forEach(c => {
+                            if (!categories.keluar.includes(c)) categories.keluar.push(c);
+                        });
+                    }
                 }
                 updateMonthFilterOptions();
                 renderUI();
@@ -344,7 +400,9 @@
         if (currentUser) {
             db.ref('users/' + currentUser.uid).set({ 
                 transactions: transactions,
-                budgets: categoryBudgets 
+                budgets: categoryBudgets,
+                goal: userGoal,
+                customCategories: categories.keluar
             });
         }
     }
@@ -374,10 +432,17 @@
         document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
         updateCategoryOptions();
     }
-    
-    function closeModal() { 
-        document.getElementById('modal-overlay').classList.remove('active'); 
+    function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+
+    function openGoalModal() {
+        document.getElementById('modal-goal-overlay').classList.add('active');
+        document.getElementById('input-goal-title').value = userGoal.title || '';
+        document.getElementById('input-goal-target').value = userGoal.target || '';
     }
+    function closeGoalModal() { document.getElementById('modal-goal-overlay').classList.remove('active'); }
+
+    function openNewCategoryModal() { document.getElementById('modal-cat-overlay').classList.add('active'); }
+    function closeNewCategoryModal() { document.getElementById('modal-cat-overlay').classList.remove('active'); }
 
     function updateCategoryOptions() {
         const type = document.getElementById('input-type').value;
@@ -401,10 +466,14 @@
         document.getElementById('val-keluar').innerText = fmtRp(totalKeluar);
         document.getElementById('val-trans').innerText = filteredTx.length;
 
-        const goalPct = Math.min(100, Math.round((Math.max(0, globalSaldo) / 10000000) * 100));
+        // Render Data Goal
+        const targetVal = userGoal.target || 10000000;
+        const goalPct = Math.min(100, Math.round((Math.max(0, globalSaldo) / targetVal) * 100));
+        document.getElementById('goal-title-text').innerText = '🎯 Goal: ' + (userGoal.title || 'Target Keuangan');
         document.getElementById('goal-pct').innerText = goalPct + '%';
         document.getElementById('goal-progress-bar').style.width = goalPct + '%';
         document.getElementById('goal-current').innerText = fmtRp(Math.max(0, globalSaldo));
+        document.getElementById('goal-target-text').innerText = fmtRp(targetVal);
 
         // Update Grafik Bar Arus Kas
         const maxVal = Math.max(totalMasuk, totalKeluar, 1);
@@ -523,6 +592,36 @@
         renderUI();
         saveToCloud();
         alert(`Anggaran ${cat} berhasil diperbarui!`);
+    }
+
+    function saveGoal() {
+        const title = document.getElementById('input-goal-title').value.trim();
+        const target = parseFloat(document.getElementById('input-goal-target').value);
+
+        if(!title || isNaN(target) || target <= 0) {
+            alert("Harap isi nama target dan nominal dengan benar!");
+            return;
+        }
+
+        userGoal = { title: title, target: target };
+        closeGoalModal();
+        renderUI();
+        saveToCloud();
+    }
+
+    function saveNewCategory() {
+        const catName = document.getElementById('input-new-cat').value.trim();
+        if(!catName) return;
+
+        if(!categories.keluar.includes(catName)) {
+            categories.keluar.push(catName);
+            categoryBudgets[catName] = 0;
+            saveToCloud();
+            renderUI();
+            alert(`Kategori "${catName}" berhasil ditambahkan!`);
+        }
+        document.getElementById('input-new-cat').value = '';
+        closeNewCategoryModal();
     }
 </script>
 
