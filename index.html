@@ -353,15 +353,15 @@
         }
     });
 
-    document.getElementById('btn-login-google').addEventListener('click', () => {
+    document.getElementById('btn-login-google').onclick = () => {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch(err => alert("Gagal Login: " + err.message));
-    });
+    };
 
-    document.getElementById('btn-logout').addEventListener('click', () => auth.signOut());
-    document.getElementById('user-avatar').addEventListener('click', () => {
+    document.getElementById('btn-logout').onclick = () => auth.signOut();
+    document.getElementById('user-avatar').onclick = () => {
         if(confirm("Apakah Anda ingin keluar (logout)?")) auth.signOut();
-    });
+    };
 
     function saveToCloud() {
         if (currentUser) {
@@ -467,7 +467,7 @@
         renderChart(totalMasuk, totalKeluar);
 
         const dbTxContainer = document.getElementById('dashboard-tx-container');
-        if (filteredTx.length === 0) dbTxContainer.innerHTML = '<div class="empty-state">Belum ada transaksi di bulan ini.</div>';
+        if (filteredTx.length === 0) dbTxContainer.innerHTML = '<div class="empty-state" style="padding:16px; text-align:center; color:#94a3b8; font-size:13px;">Belum ada transaksi di bulan ini.</div>';
         else {
             dbTxContainer.innerHTML = filteredTx.slice(0, 5).map(t => `
                 <div class="tx-row">
@@ -479,7 +479,7 @@
         }
 
         const dbCatContainer = document.getElementById('dashboard-cat-container');
-        if (totalKeluar === 0) dbCatContainer.innerHTML = '<div class="empty-state">Belum ada pengeluaran.</div>';
+        if (totalKeluar === 0) dbCatContainer.innerHTML = '<div class="empty-state" style="padding:16px; text-align:center; color:#94a3b8; font-size:13px;">Belum ada pengeluaran.</div>';
         else {
             dbCatContainer.innerHTML = Object.keys(catTotals).map(cat => {
                 const amount = catTotals[cat];
@@ -499,7 +499,7 @@
 
         const searchedTx = filteredTx.filter(t => (t.desc.toLowerCase().includes(searchQuery) || t.category.toLowerCase().includes(searchQuery)) && (typeFilter === 'semua' || t.type === typeFilter));
 
-        if (searchedTx.length === 0) fullTxContainer.innerHTML = '<div class="empty-state">Tidak ada transaksi ditemukan.</div>';
+        if (searchedTx.length === 0) fullTxContainer.innerHTML = '<div class="empty-state" style="padding:16px; text-align:center; color:#94a3b8; font-size:13px;">Tidak ada transaksi ditemukan.</div>';
         else {
             fullTxContainer.innerHTML = searchedTx.map((t) => `
                 <div class="tx-row" style="grid-template-columns: 1fr 1fr 1.2fr 30px;">
@@ -548,7 +548,6 @@
     
     document.getElementById('btn-nav-add').onclick = openModal;
     document.getElementById('top-add-btn').onclick = openModal;
-    document.getElementById('top-search-btn').onclick = () => switchTab('page-transaksi', 1);
     document.getElementById('btn-close-modal').onclick = closeModal;
 
     document.getElementById('month-filter').onchange = renderUI;
