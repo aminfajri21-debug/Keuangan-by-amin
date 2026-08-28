@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Money Manager Pro Cloud</title>
+    <!-- Favicon untuk Tab Browser -->
+    <link rel="icon" type="image/png" href="icon.png">
+
+    <!-- App Icon saat ditambahkan ke Home Screen iPhone / iPad (iOS) -->
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- App Icon untuk Android & PWA -->
+    <link rel="manifest" href="data:application/json,{
+      %22name%22:%22Money Manager Pro%22,
+      %22short_name%22:%22MoneyManager%22,
+      %22start_url%22:%22.%22,
+      %22display%22:%22standalone%22,
+      %22background_color%22:%22#f4f6fb%22,
+      %22theme_color%22:%22#6366f1%22,
+      %22icons%22:[{%22src%22:%22icon.png%22,%22sizes%22:%22192x192 512x512%22,%22type%22:%22image/png%22}]
+    }">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
