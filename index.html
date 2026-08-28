@@ -75,7 +75,11 @@
         .section-card { background: #ffffff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
         .section-header { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }
 
-        .table-header { display: grid; grid-template-columns: 1fr 1.2fr 1fr; font-size: 11px; font-weight: 700; color: var(--text-sub); padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; margin-bottom: 8px; }
+        /* Custom HTML Native Chart */
+        .chart-native-wrap { display: flex; align-items: flex-end; justify-content: space-around; height: 140px; padding-top: 20px; border-bottom: 2px solid #e2e8f0; }
+        .chart-bar-container { display: flex; flex-direction: column; align-items: center; width: 40%; height: 100%; justify-content: flex-end; }
+        .chart-bar { width: 100%; max-width: 48px; border-radius: 8px 8px 0 0; transition: height 0.5s ease; min-height: 4px; }
+        .chart-label { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-top: 8px; text-align: center; }
 
         .tx-row { display: grid; grid-template-columns: 1fr 1.2fr 1fr; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8fafc; font-size: 13px; }
         .tx-date { font-size: 11px; color: var(--text-sub); }
@@ -171,6 +175,23 @@
             </div>
         </div>
 
+        <!-- GRAFIK ARUS KAS NATIVE -->
+        <div class="section-card">
+            <div class="section-header">Grafik Arus Kas</div>
+            <div class="chart-native-wrap">
+                <div class="chart-bar-container">
+                    <div class="chart-bar" id="bar-masuk" style="height: 0%; background: #10b981;"></div>
+                </div>
+                <div class="chart-bar-container">
+                    <div class="chart-bar" id="bar-keluar" style="height: 0%; background: #ef4444;"></div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-around; margin-top:6px;">
+                <span class="chart-label" style="color:#10b981;">Pemasukan</span>
+                <span class="chart-label" style="color:#ef4444;">Pengeluaran</span>
+            </div>
+        </div>
+
         <div class="section-card">
             <div class="section-header">Pengeluaran per Kategori</div>
             <div id="dashboard-cat-container"></div>
@@ -231,6 +252,7 @@
     </div>
 </div>
 
+<!-- NAVIGASI BAWAH (MENU ANGGARAN KEMBALI AKTIF) -->
 <div class="bottom-nav">
     <button class="nav-item active" id="btn-nav-0" onclick="switchTab('page-beranda', 0)" type="button">Beranda</button>
     <button class="nav-item" id="btn-nav-1" onclick="switchTab('page-transaksi', 1)" type="button">Transaksi</button>
@@ -379,6 +401,11 @@
         document.getElementById('goal-pct').innerText = goalPct + '%';
         document.getElementById('goal-progress-bar').style.width = goalPct + '%';
         document.getElementById('goal-current').innerText = fmtRp(Math.max(0, globalSaldo));
+
+        // Update Chart Native Visual
+        const maxVal = Math.max(totalMasuk, totalKeluar, 1);
+        document.getElementById('bar-masuk').style.height = Math.round((totalMasuk / maxVal) * 100) + '%';
+        document.getElementById('bar-keluar').style.height = Math.round((totalKeluar / maxVal) * 100) + '%';
 
         const dbTxContainer = document.getElementById('dashboard-tx-container');
         if (filteredTx.length === 0) {
