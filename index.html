@@ -75,7 +75,7 @@
         .section-card { background: #ffffff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
         .section-header { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }
 
-        /* Custom HTML Native Chart */
+        /* GRAFIK ARUS KAS NATIVE */
         .chart-native-wrap { display: flex; align-items: flex-end; justify-content: space-around; height: 140px; padding-top: 20px; border-bottom: 2px solid #e2e8f0; }
         .chart-bar-container { display: flex; flex-direction: column; align-items: center; width: 40%; height: 100%; justify-content: flex-end; }
         .chart-bar { width: 100%; max-width: 48px; border-radius: 8px 8px 0 0; transition: height 0.5s ease; min-height: 4px; }
@@ -175,7 +175,7 @@
             </div>
         </div>
 
-        <!-- GRAFIK ARUS KAS NATIVE -->
+        <!-- GRAFIK ARUS KAS -->
         <div class="section-card">
             <div class="section-header">Grafik Arus Kas</div>
             <div class="chart-native-wrap">
@@ -252,7 +252,7 @@
     </div>
 </div>
 
-<!-- NAVIGASI BAWAH (MENU ANGGARAN KEMBALI AKTIF) -->
+<!-- NAVIGASI BAWAH -->
 <div class="bottom-nav">
     <button class="nav-item active" id="btn-nav-0" onclick="switchTab('page-beranda', 0)" type="button">Beranda</button>
     <button class="nav-item" id="btn-nav-1" onclick="switchTab('page-transaksi', 1)" type="button">Transaksi</button>
@@ -402,7 +402,7 @@
         document.getElementById('goal-progress-bar').style.width = goalPct + '%';
         document.getElementById('goal-current').innerText = fmtRp(Math.max(0, globalSaldo));
 
-        // Update Chart Native Visual
+        // Update Grafik Bar Arus Kas
         const maxVal = Math.max(totalMasuk, totalKeluar, 1);
         document.getElementById('bar-masuk').style.height = Math.round((totalMasuk / maxVal) * 100) + '%';
         document.getElementById('bar-keluar').style.height = Math.round((totalKeluar / maxVal) * 100) + '%';
