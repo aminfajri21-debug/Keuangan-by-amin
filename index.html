@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=15">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=15">
-    <link rel="manifest" href="manifest.json?v=15">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=16">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=16">
+    <link rel="manifest" href="manifest.json?v=16">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -361,7 +361,6 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // Mengeset ketahanan sesi login lokal
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
     let currentUser = null;
@@ -376,12 +375,12 @@
 
     const fmtRp = (num) => 'Rp ' + Math.abs(num).toLocaleString('id-ID');
 
-    // Menangani kembalinya halaman dari alur Redirect Login HP
+    // Tangani kembalinya Redirect login di HP
     auth.getRedirectResult().then((result) => {
         if (result && result.user) {
             loadUserData(result.user);
         }
-    }).catch(err => console.log("Redirect info:", err));
+    }).catch(err => console.log("Redirect result:", err));
 
     auth.onAuthStateChanged((user) => {
         const btnLogin = document.getElementById('btn-login-google');
@@ -411,6 +410,9 @@
                     if (data.categories.keluar) categories.keluar = data.categories.keluar;
                     if (data.categories.masuk) categories.masuk = data.categories.masuk;
                 }
+            } else {
+                // AUTO-INITIALIZE KE FIREBASE JIKA DATA MASIH KOSONG
+                saveToCloud();
             }
             updateMonthFilterOptions();
             switchTab('page-beranda', 0);
@@ -426,12 +428,18 @@
 
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        
-        // Selalu gunakan Redirect untuk menghindari error "network-request-failed" pada browser HP
-        auth.signInWithRedirect(provider).catch(err => {
-            btnLogin.disabled = false;
-            btnLogin.innerText = 'Masuk dengan Google';
-            alert("Gagal Login: " + err.message);
+
+        // Coba jalur Popup, jika terhalang browser HP otomatis pindah ke Redirect
+        auth.signInWithPopup(provider).catch(err => {
+            if (err.code === 'auth/network-request-failed' || err.code === 'auth/popup-blocked') {
+                auth.signInWithRedirect(provider);
+            } else {
+                btnLogin.disabled = false;
+                btnLogin.innerText = 'Masuk dengan Google';
+                if (err.code !== 'auth/cancelled-popup-request') {
+                    alert("Gagal Login: " + err.message);
+                }
+            }
         });
     }
 
