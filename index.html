@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=12">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=12">
-    <link rel="manifest" href="manifest.json?v=12">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=10">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=10">
+    <link rel="manifest" href="manifest.json?v=10">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -49,7 +49,6 @@
             display: flex; align-items: center; justify-content: center; gap: 10px;
             cursor: pointer; margin-top: 20px; box-shadow: var(--shadow-sm);
         }
-        .btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .app-container { background: var(--bg-app); width: 100%; max-width: 800px; min-height: 100vh; padding: 16px 16px 100px 16px; position: relative; }
         .page-view { display: none; }
@@ -143,7 +142,7 @@
     <div class="auth-card">
         <h2>💰 Money Manager</h2>
         <p style="font-size: 13px; color: var(--text-sub); margin-top: 8px;">Masuk untuk me-sinkronkan data keuangan Anda di HP & Laptop.</p>
-        <button class="btn-google" id="btn-login-google" onclick="doLogin()" type="button">
+        <button class="btn-google" onclick="doLogin()" type="button">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="Google">
             Masuk dengan Google
         </button>
@@ -374,7 +373,6 @@
     const fmtRp = (num) => 'Rp ' + Math.abs(num).toLocaleString('id-ID');
 
     auth.onAuthStateChanged((user) => {
-        const btnLogin = document.getElementById('btn-login-google');
         if (user) {
             currentUser = user;
             document.getElementById('auth-screen').style.display = 'none';
@@ -394,31 +392,14 @@
                     }
                 }
                 updateMonthFilterOptions();
-                switchTab('page-beranda', 0); // Pindah paksa ke Beranda saat data siap
                 renderUI();
                 checkShareTargetData();
             });
         } else {
             currentUser = null;
             document.getElementById('auth-screen').style.display = 'flex';
-            if (btnLogin) { btnLogin.disabled = false; btnLogin.innerText = 'Masuk dengan Google'; }
         }
     });
-
-    function doLogin() {
-        const btnLogin = document.getElementById('btn-login-google');
-        btnLogin.disabled = true;
-        btnLogin.innerText = 'Memproses Login...';
-
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(err => {
-            btnLogin.disabled = false;
-            btnLogin.innerText = 'Masuk dengan Google';
-            if (err.code !== 'auth/cancelled-popup-request') {
-                alert("Gagal Login: " + err.message);
-            }
-        });
-    }
 
     function checkShareTargetData() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -432,11 +413,13 @@
         }
     }
 
+    // LOGIKA PARSER PRESISI LOGIKA PEMASUKAN / PENGELUARAN MUHAMMAD AMIN FAJRI
     function analyzeParsedText(rawText) {
         const lowerText = rawText.toLowerCase();
         let selectedType = 'keluar';
         let extractedDesc = '';
 
+        // 1. CEK SIMBOL TANDA + / - DI DEPAN RP
         const hasPlusRp = /\+\s*(?:rp|idr)/i.test(rawText) || /(?:rp|idr)?\s*\+\s*[\d\.,]+/i.test(rawText);
         const hasMinusRp = /-\s*(?:rp|idr)/i.test(rawText) || /(?:rp|idr)?\s*-\s*[\d\.,]+/i.test(rawText);
 
@@ -445,8 +428,13 @@
         } else if (hasMinusRp) {
             selectedType = 'keluar';
         } else {
+            // 2. CEK ALUR REKENING "MUHAMMAD AMIN FAJRI"
+            // Pilihan Pola Nama User: "muhammad amin fajri" / "amin fajri"
             const userPattern = /(?:muhammad\s+amin\s+fajri|amin\s+fajri)/i;
+            
+            // Pola: "Dari [Lain] ke [User]" => PEMASUKAN (+)
             const incomingPattern = new RegExp(`dari\\s+([A-Za-z0-9\\s]{2,20})\\s+ke\\s+${userPattern.source}`, 'i');
+            // Pola: "Dari [User] ke [Lain]" => PENGELUARAN (-)
             const outgoingPattern = new RegExp(`dari\\s+${userPattern.source}\\s+ke\\s+([A-Za-z0-9\\s]{2,20})`, 'i');
 
             const matchIn = rawText.match(incomingPattern);
@@ -459,6 +447,7 @@
                 selectedType = 'keluar';
                 extractedDesc = 'Ke ' + matchOut[1].trim();
             } else {
+                // Katakunci Alternatif Umum
                 const isExplicitIncoming = /transfer dari|terima dari|diterima dari|diterima|top up berhasil|topup berhasil|kredit|cashback|refund|uang masuk/i.test(lowerText);
                 const isExplicitOutgoing = /transfer ke|kirim ke|pembayaran ke|bayar ke|biaya admin|debit|pengeluaran/i.test(lowerText);
 
@@ -471,6 +460,7 @@
         typeSelect.value = selectedType;
         updateCategoryOptions();
 
+        // 3. PEMFILTERAN ANGKA NOMINAL PRESISI
         let foundAmount = 0;
         const keywordMatch = rawText.match(/(?:total|nominal|jumlah|rp|idr|\+|\-)\s*[:\.]?\s*([0-9\.,]{3,15})/i);
         if (keywordMatch) {
@@ -497,6 +487,7 @@
             document.getElementById('input-amount').value = foundAmount;
         }
 
+        // 4. MENGATUR KETERANGAN JIKA BELUM TERISI DARI ALUR MUHAMMAD AMIN FAJRI
         if (!extractedDesc) {
             const targetMatch = rawText.match(/(?:ke|penerima|merchant|untuk|dari|transfer ke|kirim ke|transfer dari)\s*[:\.]?\s*([A-Za-z0-9\s]{3,20})/i);
             if (targetMatch && targetMatch[1]) {
@@ -526,6 +517,11 @@
             .catch(err => {
                 statusEl.innerText = '❌ Gagal memindai struk.';
             });
+    }
+
+    function doLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(err => alert("Gagal Login: " + err.message));
     }
 
     function doLogout() {
