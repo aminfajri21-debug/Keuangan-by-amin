@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=11">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=11">
-    <link rel="manifest" href="manifest.json?v=11">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=12">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=12">
+    <link rel="manifest" href="manifest.json?v=12">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -394,6 +394,7 @@
                     }
                 }
                 updateMonthFilterOptions();
+                switchTab('page-beranda', 0); // Pindah paksa ke Beranda saat data siap
                 renderUI();
                 checkShareTargetData();
             });
