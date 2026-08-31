@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Money Manager Pro Cloud</title>
+    <title>Keuangan by aminn</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=20">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=20">
-    <link rel="manifest" href="manifest.json?v=20">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=21">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=21">
+    <link rel="manifest" href="manifest.json?v=21">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -97,7 +97,7 @@
 
         .cat-item { margin-bottom: 14px; }
         .cat-item:last-child { margin-bottom: 0; }
-        .cat-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+        .cat-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 4px; align-items: center; }
         .cat-bar-bg { height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
         .cat-bar-fill { height: 100%; border-radius: 10px; }
 
@@ -105,12 +105,13 @@
         .search-input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: var(--radius-md); font-size: 13px; outline: none; }
 
         .btn-del { border: none; background: none; color: #cbd5e1; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+        .btn-del:hover { color: var(--danger); }
         .btn-sm-action { border: none; background: #e0e7ff; color: var(--primary); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
 
         .ocr-upload-box { border: 2px dashed #cbd5e1; padding: 14px; border-radius: var(--radius-md); text-align: center; cursor: pointer; margin-bottom: 12px; background: #f8fafc; font-size: 12px; color: var(--text-sub); }
         .ocr-upload-box:hover { border-color: var(--primary); background: #e0e7ff; }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; height: 60px; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08); display: flex; justify-around: center; align-items: center; z-index: 99999; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; height: 60px; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08); display: flex; justify-content: space-around; align-items: center; z-index: 99999; }
         .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-sub); border: none; background: transparent; cursor: pointer; width: 20%; gap: 2px; }
         .nav-item.active { color: var(--primary); }
         .nav-add-btn { width: 46px; height: 46px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; color: #ffffff; font-size: 24px; cursor: pointer; margin-top: -15px; box-shadow: var(--shadow-float); }
@@ -141,7 +142,7 @@
 
 <div class="auth-screen" id="auth-screen">
     <div class="auth-card">
-        <h2>💰 Money Manager</h2>
+        <h2>💰 Keuangan by aminn</h2>
         <p style="font-size: 13px; color: var(--text-sub); margin-top: 8px;">Masuk untuk me-sinkronkan data keuangan Anda di HP & Laptop.</p>
         <button class="btn-google" id="btn-login-google" onclick="doLogin()" type="button">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="Google">
@@ -153,7 +154,7 @@
 <div class="app-container">
     <div class="top-header">
         <button class="icon-btn" onclick="openModal()" type="button">+</button>
-        <div class="app-title">💰 Money Manager</div>
+        <div class="app-title">💰 Keuangan by aminn</div>
         <img src="https://via.placeholder.com/36" class="user-profile" id="user-avatar" onclick="doLogout()" title="Klik untuk Logout">
     </div>
 
@@ -712,7 +713,13 @@
             const color = pct >= 90 ? 'var(--danger)' : (pct >= 75 ? '#f59e0b' : 'var(--success)');
             return `
                 <div class="cat-item">
-                    <div class="cat-label"><span>${cat}</span><span>${fmtRp(spent)} / ${fmtRp(limit)}</span></div>
+                    <div class="cat-label">
+                        <span>${cat}</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span>${fmtRp(spent)} / ${fmtRp(limit)}</span>
+                            <button class="btn-del" onclick="deleteBudgetCategory('${cat}')" title="Hapus Anggaran" type="button">🗑️</button>
+                        </div>
+                    </div>
                     <div class="cat-bar-bg"><div class="cat-bar-fill" style="width: ${pct}%; background: ${color};"></div></div>
                 </div>
             `;
@@ -722,6 +729,15 @@
     function deleteTransaction(id) {
         if (confirm('Hapus transaksi ini?')) {
             transactions = transactions.filter(t => t.id !== id);
+            renderUI();
+            saveToCloud();
+        }
+    }
+
+    function deleteBudgetCategory(catName) {
+        if (confirm(`Apakah Anda yakin ingin menghapus anggaran kategori "${catName}"?`)) {
+            categories.keluar = categories.keluar.filter(c => c !== catName);
+            delete categoryBudgets[catName];
             renderUI();
             saveToCloud();
         }
