@@ -9,9 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=16">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=16">
-    <link rel="manifest" href="manifest.json?v=16">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=18">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=18">
+    <link rel="manifest" href="manifest.json?v=18">
     <meta name="theme-color" content="#6366f1">
 
     <style>
@@ -364,23 +364,30 @@
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
     let currentUser = null;
-    let transactions = [];
-    let userGoal = { title: '10 Juta Pertama', target: 10000000 };
-    let categoryBudgets = { 'Kos': 550000, 'Makan': 450000, 'Bensin': 150000, 'Kuota': 70000, 'Skincare': 115000, 'Alat Mandi': 78500, 'Jajan': 141350, 'Dana Darurat': 424050, 'RDPU': 424050, 'Tabungan': 424050 };
+    let transactions = JSON.parse(localStorage.getItem('mm_tx')) || [];
+    let userGoal = JSON.parse(localStorage.getItem('mm_goal')) || { title: '10 Juta Pertama', target: 10000000 };
+    let categoryBudgets = JSON.parse(localStorage.getItem('mm_budgets')) || { 'Kos': 550000, 'Makan': 450000, 'Bensin': 150000, 'Kuota': 70000, 'Skincare': 115000, 'Alat Mandi': 78500, 'Jajan': 141350, 'Dana Darurat': 424050, 'RDPU': 424050, 'Tabungan': 424050 };
 
-    let categories = {
+    let categories = JSON.parse(localStorage.getItem('mm_cats')) || {
         masuk: ['Gaji', 'Bonus', 'Investasi', 'Lainnya'],
         keluar: ['Kos', 'Makan', 'Bensin', 'Kuota', 'Skincare', 'Alat Mandi', 'Jajan', 'Dana Darurat', 'RDPU', 'Tabungan']
     };
 
     const fmtRp = (num) => 'Rp ' + Math.abs(num).toLocaleString('id-ID');
 
-    // Tangani kembalinya Redirect login di HP
+    // Salin data ke memori lokal browser HP/Laptop
+    function updateLocalCache() {
+        localStorage.setItem('mm_tx', JSON.stringify(transactions));
+        localStorage.setItem('mm_goal', JSON.stringify(userGoal));
+        localStorage.setItem('mm_budgets', JSON.stringify(categoryBudgets));
+        localStorage.setItem('mm_cats', JSON.stringify(categories));
+    }
+
     auth.getRedirectResult().then((result) => {
         if (result && result.user) {
             loadUserData(result.user);
         }
-    }).catch(err => console.log("Redirect result:", err));
+    }).catch(err => console.log("Redirect error:", err));
 
     auth.onAuthStateChanged((user) => {
         const btnLogin = document.getElementById('btn-login-google');
@@ -399,10 +406,16 @@
         document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/36';
         document.getElementById('user-greeting').innerText = `Halo, ${user.displayName ? user.displayName.split(' ')[0] : 'User'}!`;
         
+        // Tampilkan data lokal secara instan agar tidak pernah kosong saat loading
+        updateMonthFilterOptions();
+        switchTab('page-beranda', 0);
+        renderUI();
+
+        // Tarik data terbaru dari Cloud Firebase
         db.ref('users/' + user.uid).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                transactions = data.transactions || [];
+                transactions = data.transactions || transactions;
                 categoryBudgets = data.budgets || categoryBudgets;
                 userGoal = data.goal || userGoal;
 
@@ -410,12 +423,11 @@
                     if (data.categories.keluar) categories.keluar = data.categories.keluar;
                     if (data.categories.masuk) categories.masuk = data.categories.masuk;
                 }
+                updateLocalCache();
             } else {
-                // AUTO-INITIALIZE KE FIREBASE JIKA DATA MASIH KOSONG
                 saveToCloud();
             }
             updateMonthFilterOptions();
-            switchTab('page-beranda', 0);
             renderUI();
             checkShareTargetData();
         });
@@ -429,7 +441,6 @@
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
-        // Coba jalur Popup, jika terhalang browser HP otomatis pindah ke Redirect
         auth.signInWithPopup(provider).catch(err => {
             if (err.code === 'auth/network-request-failed' || err.code === 'auth/popup-blocked') {
                 auth.signInWithRedirect(provider);
@@ -552,10 +563,14 @@
     }
 
     function doLogout() {
-        if(confirm("Keluar dari akun?")) auth.signOut();
+        if(confirm("Keluar dari akun?")) {
+            localStorage.clear();
+            auth.signOut();
+        }
     }
 
     function saveToCloud() {
+        updateLocalCache();
         if (currentUser) {
             db.ref('users/' + currentUser.uid).set({ 
                 transactions: transactions,
